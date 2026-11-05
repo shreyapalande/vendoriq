@@ -1,0 +1,162 @@
+# Bluefin Payroll: payroll and benefits for small businesses. Fictional.
+#
+# Label distribution: 4 SUPPORTED / 4 INSUFFICIENT / 2 CONTRADICTORY / 2 MISSING
+#
+# Deliberate hard cases in this file:
+#   - HYPHENATED LINE BREAK inside the key phrase on p2: "encryp-" / "tion at rest".
+#     The `lines` block puts the break exactly there in the PDF.
+#   - TWO-COLUMN page (p3): the training answer is in the left column and the
+#     data retention answer in the right column.
+#   - ENCRYPTION_IN_TRANSIT contradicts itself on one page (p2).
+#   - LOGGING_MONITORING contradicts itself ACROSS PAGES (p4 claims a central SIEM;
+#     p1 mentions in passing that server logs are not collected in one place).
+#     The contradiction is implied in a team description, not stated as a security answer.
+#   - BACKUP_DR is a long, reassuring paragraph (p5) that never gives frequency,
+#     location or testing.
+
+vendor: "Bluefin Payroll"
+
+pages:
+  # ---- Page 1
+  - layout: single
+    blocks:
+      - {type: heading, text: "1. About Bluefin Payroll"}
+      - type: paragraph
+        text: "Bluefin Payroll runs payroll and benefits administration for small businesses. Customers upload employee records, and Bluefin calculates pay, files payroll taxes and sends payslips."
+      - type: paragraph
+        text: "Bluefin is a lean company. A two-person infrastructure team looks after all production servers, and when something goes wrong they log in to each affected server to read its logs, because server logs are not collected in one place."
+      - {type: heading, text: "2. Audits"}
+      - type: paragraph
+        text: "Bluefin completed a SOC 2 Type I assessment in 2022. We plan to start a SOC 2 Type II audit next year."
+
+  # ---- Page 2
+  - layout: single
+    blocks:
+      - {type: heading, text: "3. Data Protection"}
+      - type: lines
+        lines:
+          - "All customer payroll data is protected with AES-256 encryp-"
+          - "tion at rest, using keys held in a dedicated key management"
+          - "service and rotated every year."
+      - type: paragraph
+        text: "All data exchanged with Bluefin is encrypted in transit using TLS 1.2 or higher."
+      - type: paragraph
+        text: "Some legacy payroll file imports from customers are still accepted over unencrypted FTP."
+      - {type: heading, text: "4. Authentication"}
+      - type: paragraph
+        text: "Multi-factor authentication is required for all Bluefin staff when they access internal systems, email or the production environment."
+
+  # ---- Page 3 (two columns)
+  - layout: two_column
+    blocks:
+      - {type: heading, text: "5. People"}
+      - type: paragraph
+        text: "Bluefin has 85 employees, most of them in customer support and payroll operations. Every new hire signs a confidentiality agreement before their first day."
+      - type: paragraph
+        text: "Every employee completes security awareness training when they join and again every year, and completion is tracked by the HR team."
+      - type: paragraph
+        text: "Employees who handle customer payroll files work from company-managed laptops."
+      - {type: column_break}
+      - {type: heading, text: "6. Data Lifecycle"}
+      - type: paragraph
+        text: "Customers own the employee data they upload. Bluefin uses it only to run payroll and to meet tax filing obligations on the customer's behalf."
+      - type: paragraph
+        text: "Customer data is deleted within 30 days of contract termination or of a verified deletion request. Payroll records that tax law requires us to keep are retained only for the legal minimum period."
+      - type: paragraph
+        text: "Customers can export all of their data as CSV files at any time from the account settings page."
+
+  # ---- Page 4
+  - layout: single
+    blocks:
+      - {type: heading, text: "7. Security Operations"}
+      - type: paragraph
+        text: "Security events from all production systems are sent to a central SIEM and monitored around the clock."
+      - type: paragraph
+        text: "We regularly scan our systems for vulnerabilities."
+      - type: paragraph
+        text: "Bluefin has an incident response plan."
+
+  # ---- Page 5
+  - layout: single
+    blocks:
+      - {type: heading, text: "8. Business Continuity"}
+      - type: paragraph
+        text: "Bluefin takes the safety of customer data extremely seriously. Customer data is protected by robust backup processes managed by our experienced infrastructure team, and we continuously invest in resilience so that payroll keeps running no matter what. Our hosting provider's infrastructure is designed for high availability, and our team is always ready to respond."
+      - type: paragraph
+        text: "Payroll runs are scheduled early enough that a short outage does not delay payday."
+
+expected:
+  MFA:
+    label: SUPPORTED
+    quotes:
+      - page: 2
+        text: "Multi-factor authentication is required for all Bluefin staff when they access internal systems, email or the production environment."
+    why: "MFA required for all staff on internal systems, email and production."
+  ENCRYPTION_AT_REST:
+    label: SUPPORTED
+    quotes:
+      - page: 2
+        text: "All customer payroll data is protected with AES-256 encryption at rest, using keys held in a dedicated key management service and rotated every year."
+    why: "AES-256 at rest with managed, rotated keys; the key phrase is split by a hyphenated line break."
+  ENCRYPTION_IN_TRANSIT:
+    label: CONTRADICTORY_EVIDENCE
+    quotes:
+      - page: 2
+        text: "All data exchanged with Bluefin is encrypted in transit using TLS 1.2 or higher."
+      - page: 2
+        text: "Some legacy payroll file imports from customers are still accepted over unencrypted FTP."
+    why: "p2 claims all data uses TLS, then says some imports arrive over unencrypted FTP."
+  ACCESS_REVIEWS:
+    label: MISSING_EVIDENCE
+    quotes: []
+    why: "Nothing about reviewing user access or removing it."
+  INCIDENT_RESPONSE:
+    label: INSUFFICIENT_EVIDENCE
+    quotes:
+      - page: 4
+        text: "Bluefin has an incident response plan."
+    why: "A plan exists, but nothing about it being documented in detail, tested, or customer notification."
+  BACKUP_DR:
+    label: INSUFFICIENT_EVIDENCE
+    quotes:
+      - page: 5
+        text: "Customer data is protected by robust backup processes managed by our experienced infrastructure team, and we continuously invest in resilience so that payroll keeps running no matter what."
+    why: "Long, confident paragraph that never states backup frequency, location, or any disaster recovery plan or test."
+  VULN_MGMT:
+    label: INSUFFICIENT_EVIDENCE
+    quotes:
+      - page: 4
+        text: "We regularly scan our systems for vulnerabilities."
+    why: "Scanning claimed without a schedule, patch deadlines or penetration testing."
+  LOGGING_MONITORING:
+    label: CONTRADICTORY_EVIDENCE
+    quotes:
+      - page: 4
+        text: "Security events from all production systems are sent to a central SIEM and monitored around the clock."
+      - page: 1
+        text: "when something goes wrong they log in to each affected server to read its logs, because server logs are not collected in one place."
+    why: "p4 claims a central SIEM for all production systems; p1 says server logs are not collected in one place."
+  DATA_RETENTION:
+    label: SUPPORTED
+    quotes:
+      - page: 3
+        text: "Customer data is deleted within 30 days of contract termination or of a verified deletion request."
+      - page: 3
+        text: "Payroll records that tax law requires us to keep are retained only for the legal minimum period."
+    why: "Right column of the two-column p3: data deleted within 30 days of contract end or request, and records kept by law only for the legal minimum period."
+  SUBPROCESSORS:
+    label: MISSING_EVIDENCE
+    quotes: []
+    why: "Third parties that process customer data are never listed or mentioned."
+  SECURITY_TRAINING:
+    label: SUPPORTED
+    quotes:
+      - page: 3
+        text: "Every employee completes security awareness training when they join and again every year, and completion is tracked by the HR team."
+    why: "Left column of the two-column p3: training at hire and every year, tracked."
+  CERTIFICATION:
+    label: INSUFFICIENT_EVIDENCE
+    quotes:
+      - page: 1
+        text: "Bluefin completed a SOC 2 Type I assessment in 2022."
+    why: "Only a 2022 Type I report, which is not current; Type II is only planned."

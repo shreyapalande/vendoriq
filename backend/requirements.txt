@@ -1,0 +1,24 @@
+# Backend Python dependencies. Install into the repo venv from the repo root:
+#   .venv/bin/pip install -r backend/requirements.txt   (Windows: .venv\Scripts\pip ...)
+
+# PDFs: generate synthetic questionnaires (ReportLab), read them (PyMuPDF)
+reportlab==5.1.0
+# Pinned to 1.x: PyMuPDF 2.x hard-requires onnxruntime, numpy, networkx and its
+# layout/LLM add-ons (no install option to drop them). 1.28.2 has no dependencies.
+pymupdf==1.28.2
+
+# Eval data files
+pyyaml==6.0.3
+
+# AI pipeline (app/ai/): Gemini SDK, fuzzy citation matching
+google-genai==2.34.0
+rapidfuzz==3.14.6
+# Already installed by google-genai; listed because app/ai/analyze.py imports it
+# directly to catch httpx.TimeoutException (the SDK does not wrap timeouts).
+httpx==0.28.1
+
+# Settings from environment variables / .env (app/config.py)
+pydantic-settings==2.16.2
+
+# Tests
+pytest==9.2.0

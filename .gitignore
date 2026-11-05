@@ -1,0 +1,14 @@
+.env
+__pycache__/
+*.pyc
+.venv/
+node_modules/
+dist/
+evals/pdfs/
+# Eval runs: keep only the chosen baseline run. (`evals/results/*`, not `evals/results/`,
+# because git cannot re-include a file inside an ignored directory.)
+evals/results/*
+!evals/results/baseline/
+uploads/
+.pytest_cache/
+backend/.pytest_tmp/

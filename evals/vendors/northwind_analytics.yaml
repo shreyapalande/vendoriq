@@ -1,0 +1,157 @@
+# Northwind Analytics: hosted business intelligence platform. Fictional.
+#
+# Label distribution: 6 SUPPORTED / 2 INSUFFICIENT / 2 CONTRADICTORY / 2 MISSING
+#
+# Deliberate hard cases in this file:
+#   - BACKUP_DR contradicts itself ACROSS TWO PAGES (p3: daily, second region;
+#     p5: weekly, same region).
+#   - ACCESS_REVIEWS contradicts itself ACROSS TWO PAGES, subtly: p2 says managers
+#     review access every quarter; p1 (in the audit section) says access is reviewed
+#     once a year during the SOC 2 audit and otherwise only changed on request.
+#   - The MFA answer is inside a TABLE (p2).
+
+vendor: "Northwind Analytics"
+
+pages:
+  # ---- Page 1
+  - layout: single
+    blocks:
+      - {type: heading, text: "1. Company Overview"}
+      - type: paragraph
+        text: "Northwind Analytics provides a hosted business intelligence platform that lets finance and operations teams build dashboards from their own data. The platform is used by about 400 mid-sized companies in North America and Europe."
+      - type: paragraph
+        text: "This questionnaire was completed by the Northwind security team. Answers describe the production platform as of the date of submission."
+      - {type: heading, text: "2. Certifications and Audits"}
+      - type: paragraph
+        text: "Northwind Analytics holds a SOC 2 Type II report covering January 1 to December 31, 2025, issued by an independent CPA firm in February 2026. A copy is available to customers under NDA."
+      - type: paragraph
+        text: "Access to production systems is reviewed once a year, as part of the annual SOC 2 audit; between audits, access changes are made only when someone requests them."
+
+  # ---- Page 2
+  - layout: single
+    blocks:
+      - {type: heading, text: "3. Identity and Access Management"}
+      - type: paragraph
+        text: "The answers below describe how Northwind controls workforce access to its systems."
+      - type: table
+        rows:
+          - ["Question", "Answer"]
+          - ["Is multi-factor authentication required for workforce access?", "Yes. MFA is enforced for all employees and contractors on SSO, VPN and production consoles."]
+          - ["Is single sign-on used for internal tools?", "Yes. All internal tools are behind the company identity provider."]
+          - ["How quickly is access removed when someone leaves?", "Accounts are disabled within 24 hours of termination."]
+      - {type: heading, text: "Access Reviews"}
+      - type: paragraph
+        text: "Managers review user access to production systems every quarter and remove any access that is no longer needed."
+
+  # ---- Page 3
+  - layout: single
+    blocks:
+      - {type: heading, text: "4. Data Protection"}
+      - type: paragraph
+        text: "All connections to the Northwind platform use TLS 1.2 or higher. TLS 1.0 and 1.1 are disabled on every public endpoint."
+      - type: paragraph
+        text: "Sensitive fields such as user passwords and API credentials are encrypted in the database."
+      - {type: heading, text: "Backups"}
+      - type: paragraph
+        text: "Full backups of production databases are taken every day and copied to a second cloud region."
+
+  # ---- Page 4
+  - layout: single
+    blocks:
+      - {type: heading, text: "5. Security Operations"}
+      - type: paragraph
+        text: "Northwind maintains a documented incident response plan that is tested in a tabletop exercise twice a year. Customers are notified of a confirmed security incident affecting their data within 72 hours."
+      - type: paragraph
+        text: "Infrastructure and third-party libraries are scanned for vulnerabilities every week. Critical vulnerabilities are patched within 7 days and high-severity ones within 30 days. An independent security firm performs a penetration test of the platform every year."
+      - type: paragraph
+        text: "Application events are written to log files on each server."
+
+  # ---- Page 5
+  - layout: single
+    blocks:
+      - {type: heading, text: "6. Business Continuity"}
+      - type: paragraph
+        text: "Production database backups are taken once a week and kept in the same region as production."
+      - type: paragraph
+        text: "A disaster recovery plan exists and is reviewed by the engineering team."
+      - {type: heading, text: "7. Subprocessors"}
+      - type: paragraph
+        text: "A current list of subprocessors is published at northwind.example/subprocessors. Each subprocessor completes a security assessment before onboarding and is reassessed every year."
+
+expected:
+  MFA:
+    label: SUPPORTED
+    quotes:
+      - page: 2
+        text: "Yes. MFA is enforced for all employees and contractors on SSO, VPN and production consoles."
+    why: "Table answer on p2 says MFA is enforced for all employees and contractors."
+  ENCRYPTION_AT_REST:
+    label: INSUFFICIENT_EVIDENCE
+    quotes:
+      - page: 3
+        text: "Sensitive fields such as user passwords and API credentials are encrypted in the database."
+    why: "Only some sensitive fields are encrypted; nothing about all customer data or key management."
+  ENCRYPTION_IN_TRANSIT:
+    label: SUPPORTED
+    quotes:
+      - page: 3
+        text: "All connections to the Northwind platform use TLS 1.2 or higher. TLS 1.0 and 1.1 are disabled on every public endpoint."
+    why: "TLS 1.2+ on all connections, old TLS versions disabled."
+  ACCESS_REVIEWS:
+    label: CONTRADICTORY_EVIDENCE
+    quotes:
+      - page: 2
+        text: "Managers review user access to production systems every quarter and remove any access that is no longer needed."
+      - page: 1
+        text: "Access to production systems is reviewed once a year, as part of the annual SOC 2 audit; between audits, access changes are made only when someone requests them."
+    why: "p2 says quarterly manager reviews; p1 says access is reviewed only yearly and otherwise changed only on request."
+  INCIDENT_RESPONSE:
+    label: SUPPORTED
+    quotes:
+      - page: 4
+        text: "Northwind maintains a documented incident response plan that is tested in a tabletop exercise twice a year."
+      - page: 4
+        text: "Customers are notified of a confirmed security incident affecting their data within 72 hours."
+    why: "Documented plan, tested twice a year, with a 72-hour customer notification commitment."
+  BACKUP_DR:
+    label: CONTRADICTORY_EVIDENCE
+    quotes:
+      - page: 3
+        text: "Full backups of production databases are taken every day and copied to a second cloud region."
+      - page: 5
+        text: "Production database backups are taken once a week and kept in the same region as production."
+    why: "p3 says daily backups to a second region; p5 says weekly backups in the same region."
+  VULN_MGMT:
+    label: SUPPORTED
+    quotes:
+      - page: 4
+        text: "Infrastructure and third-party libraries are scanned for vulnerabilities every week. Critical vulnerabilities are patched within 7 days and high-severity ones within 30 days."
+      - page: 4
+        text: "An independent security firm performs a penetration test of the platform every year."
+    why: "Weekly scans, patch deadlines by severity, and an annual independent penetration test."
+  LOGGING_MONITORING:
+    label: INSUFFICIENT_EVIDENCE
+    quotes:
+      - page: 4
+        text: "Application events are written to log files on each server."
+    why: "Logs exist, but nothing about security events, retention or monitoring for alerts."
+  DATA_RETENTION:
+    label: MISSING_EVIDENCE
+    quotes: []
+    why: "The document never says how long customer data is kept or when it is deleted."
+  SUBPROCESSORS:
+    label: SUPPORTED
+    quotes:
+      - page: 5
+        text: "A current list of subprocessors is published at northwind.example/subprocessors. Each subprocessor completes a security assessment before onboarding and is reassessed every year."
+    why: "Published subprocessor list, with an assessment before onboarding and every year."
+  SECURITY_TRAINING:
+    label: MISSING_EVIDENCE
+    quotes: []
+    why: "Staff security training is not mentioned anywhere."
+  CERTIFICATION:
+    label: SUPPORTED
+    quotes:
+      - page: 1
+        text: "Northwind Analytics holds a SOC 2 Type II report covering January 1 to December 31, 2025, issued by an independent CPA firm in February 2026."
+    why: "Current SOC 2 Type II report from an independent auditor."
