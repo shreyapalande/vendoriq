@@ -34,7 +34,10 @@ PAGES = ["Security overview\nMulti-factor authentication is required for all emp
 def main() -> int:
     try:
         settings = get_settings()
-    except ValidationError:
+    except ValidationError as exc:
+        print(f"FAIL: settings are incomplete (check the repo-root .env against .env.example): {exc}")
+        return 1
+    if not settings.gemini_api_key or not settings.gemini_model:
         print("FAIL: GEMINI_API_KEY and/or GEMINI_MODEL are not set (in the environment or the repo-root .env).")
         return 1
     print(f"model: {settings.gemini_model}  (key loaded, {len(settings.gemini_api_key)} characters; not printed)")

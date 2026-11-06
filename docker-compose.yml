@@ -1,0 +1,33 @@
+# Local PostgreSQL for development and tests.
+#   docker compose up -d db        start (waits for nothing; check with `docker compose ps`)
+#   docker compose down            stop, keep data
+#   docker compose down -v         stop and DELETE all data (re-runs the init scripts next start)
+#
+# Credentials come from the repo-root .env (see .env.example); compose reads it automatically.
+
+services:
+  db:
+    # Major-version tag: picks up minor (bug/security) releases on `docker compose pull`.
+    image: postgres:18
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:?set POSTGRES_USER in .env}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
+      POSTGRES_DB: ${POSTGRES_DB:?set POSTGRES_DB in .env}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      # PostgreSQL 18+ images: PGDATA is /var/lib/postgresql/18/docker and the image's
+      # VOLUME is /var/lib/postgresql, so the volume is mounted there (NOT at
+      # /var/lib/postgresql/data as for 17 and older). The per-major-version
+      # subdirectory lets a later pg_upgrade keep old and new data side by side.
+      - pgdata:/var/lib/postgresql   # Compose names it vendoriq_pgdata (project prefix)
+      # Run once, only when the data directory is empty (first start): creates the test database.
+      - ./docker/postgres-init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  pgdata:

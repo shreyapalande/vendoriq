@@ -20,5 +20,17 @@ httpx==0.28.1
 # Settings from environment variables / .env (app/config.py)
 pydantic-settings==2.16.2
 
-# Tests
+# API (M2). fastapi 0.162 also pulls in opentelemetry-api as its own dependency.
+fastapi==0.162.0
+uvicorn==0.54.0
+
+# Database (M2): sync SQLModel on SQLAlchemy, psycopg 3, migrations.
+# psycopg[binary] bundles libpq (no PostgreSQL install needed on Windows);
+# checked to install on Python 3.14 before pinning.
+sqlmodel==0.0.48
+sqlalchemy==2.1.8
+psycopg[binary]==3.3.8
+alembic==1.20.1
+
+# Tests (fastapi.testclient.TestClient runs on httpx, pinned above)
 pytest==9.2.0

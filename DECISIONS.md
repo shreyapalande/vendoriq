@@ -99,3 +99,15 @@ Template:
 ## D-16: Schema sent as `response_json_schema`, not `response_schema`
 - Milestone: M1b. The Pydantic schema goes to Gemini via `response_json_schema=AnalysisResult.model_json_schema()`, and the answer is validated again in code with `AnalysisResult.model_validate_json`.
 - The first live call failed: the API rejects `additionalProperties: false` (produced by `extra="forbid"`) through `response_schema`, even though the SDK converts it without complaint locally. Keeping `extra="forbid"` means any field the model invents is rejected; the SDK documents `response_json_schema` as supporting everything our schema uses.
+
+## D-17: Tests run on a real Postgres test database, each test in a rolled-back transaction
+- Milestone: M2. The test database is migrated with `alembic upgrade head` once per run. Each test gets a connection with an open transaction and a Session using `join_transaction_mode="create_savepoint"`, so the code under test can call `commit()` (only a SAVEPOINT is released) and the fixture still rolls everything back. Database tests are marked `db` and fail, rather than skip, when the database is down; `pytest -m "not db"` runs the rest without Docker. The fixture refuses a test URL that names the dev database or doesn't end in `_test`.
+- SQLite differs from Postgres in types, locking and conditional updates, so it would test a different database than production. The rollback keeps tests independent without truncating tables, and a skipped database test is too easy to mistake for a passing one. Limits: sequences still advance, and anything committed on another connection (e.g. the M6 worker) is not rolled back.
+
+## D-18: One JSON error shape with a server-generated request id
+- Milestone: M2. Every error is `{"error": {"code", "message", "request_id"}}`, from handlers for HTTPException (including Starlette's own 404/405), validation errors and unexpected exceptions. Middleware generates the request id, ignores any id the client sends, and returns it in `X-Request-ID`. Unexpected errors log the full traceback with the request id and return a generic 500; validation errors list the failing fields but never echo the submitted values.
+- One shape lets the frontend handle every error the same way, and the request id links a user's report to the server log line. Stack traces, exception text and input values can contain secrets or internals, so they stay in the log.
+
+## D-19: PostgreSQL 18, volume mounted at /var/lib/postgresql
+- Milestone: M2. Docker Compose runs `postgres:18` with the named volume at `/var/lib/postgresql`, not `/var/lib/postgresql/data` as in 17 and older. An init script creates `vendoriq_test` on first start.
+- The 18+ image keeps data in a per-major-version subdirectory (`PGDATA=/var/lib/postgresql/18/docker`), so a future `pg_upgrade --link` can have old and new data side by side under one mount; the old mount path would miss PGDATA and lose data when the container is recreated. Trade-off: init scripts only run on an empty volume, so a missing test database needs `docker compose down -v`, which deletes local data.

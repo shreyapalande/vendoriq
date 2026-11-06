@@ -16,7 +16,7 @@ code I can explain over clever or abstract code.
 ## Stack (do not change without asking)
 - Frontend: React + JavaScript (not TypeScript) + Vite + Tailwind + React Router
 - Backend: Python (version below), FastAPI, Pydantic v2, SQLModel (sync), Alembic
-- Database: PostgreSQL 16 via Docker Compose
+- Database: PostgreSQL 18 via Docker Compose (volume mounted at /var/lib/postgresql, as 18+ images require)
 - PDF: PyMuPDF. PDF generation for test data: ReportLab
 - AI: Google Gemini API via the official `google-genai` SDK, free tier, with a JSON
   response schema (structured output). Model name from env `GEMINI_MODEL`, key from
@@ -88,16 +88,31 @@ DECISIONS.md
 - If something in my request conflicts with these rules, say so instead of guessing.
 
 ## Commands
-(Fill in during Milestone 2.)
+Windows PowerShell 5.1, run from the repo root unless a `cd` is shown. (PowerShell 5.1
+has no `&&`; use `;` or separate lines.)
+
 - Python environment: a virtualenv already exists at `.venv` in the repo root.
-  Always use it: run `.venv/bin/python`, `.venv/bin/pip` and `.venv/bin/pytest`
-  (Windows: `.venv\Scripts\...`). Never install packages globally and never create
+  Always use it: `.venv\Scripts\python`, `.venv\Scripts\pip`, `.venv\Scripts\pytest`
+  (macOS/Linux: `.venv/bin/...`). Never install packages globally and never create
   another venv. Add every dependency to backend/requirements.txt.
-- Start database: `docker compose up -d db`
-- Migrate: `cd backend && alembic upgrade head`
-- Seed: `python scripts/seed.py`
-- API: `cd backend && uvicorn app.main:app --reload`
-- Worker: `cd backend && python -m worker.main`
-- Tests: `cd backend && pytest`
-- Frontend: `cd frontend && npm run dev`
-- Eval: `python scripts/run_eval.py`
+- First-time setup: `copy .env.example .env` (then fill in), then
+  `.venv\Scripts\pip install -r backend\requirements.txt`, then `cd frontend; npm install`
+- Start database: `docker compose up -d --wait db`  (stop: `docker compose stop db`)
+  - The test database `vendoriq_test` is created by `docker/postgres-init/` only when
+    the volume is first created. If it is missing: `docker compose down -v` (DELETES
+    all local data), then start again.
+- Migrate: `cd backend; ..\.venv\Scripts\alembic upgrade head`
+  - New migration: `cd backend; ..\.venv\Scripts\alembic revision --autogenerate -m "..."`
+- API: `cd backend; ..\.venv\Scripts\uvicorn app.main:app --reload`  (http://127.0.0.1:8000)
+  - Log every SQL statement: set `SQL_ECHO=true` in .env
+- Tests (database running): `cd backend; ..\.venv\Scripts\pytest`
+  - Without Docker/Postgres: `cd backend; ..\.venv\Scripts\pytest -m "not db"`
+  - Database tests fail (not skip) when the database is down, by design.
+- Frontend: `cd frontend; npm run dev`  (http://localhost:5173; proxies /api to the API)
+  - Lint / build: `cd frontend; npm run lint` / `npm run build`
+  - Passing flags in PowerShell 5.1: `npm run dev -- --port 5174` loses the flags;
+    use `npx vite --port 5174` instead.
+- Gemini smoke check: `.venv\Scripts\python scripts\check_gemini.py`
+- Eval: `.venv\Scripts\python scripts\run_eval.py`
+- Seed: `.venv\Scripts\python scripts\seed.py` (later milestone; not yet)
+- Worker: `cd backend; ..\.venv\Scripts\python -m worker.main` (later milestone; not yet)

@@ -200,6 +200,8 @@ def analyze(
     if client is None or model is None:
         from app.config import get_settings  # only needed for a real call
         settings = get_settings()
+        if not settings.gemini_api_key or not settings.gemini_model:
+            raise AnalysisError("GEMINI_API_KEY and GEMINI_MODEL must be set to call Gemini")
         client = client or genai.Client(api_key=settings.gemini_api_key)
         model = model or settings.gemini_model
 
