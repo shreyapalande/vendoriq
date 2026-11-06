@@ -32,5 +32,8 @@ sqlalchemy==2.1.8
 psycopg[binary]==3.3.8
 alembic==1.20.1
 
+# Password hashing (M3: seed; M4: login). argon2id; abi3 wheel works on Python 3.14.
+argon2-cffi==25.1.0
+
 # Tests (fastapi.testclient.TestClient runs on httpx, pinned above)
 pytest==9.2.0

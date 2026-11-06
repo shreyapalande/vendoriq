@@ -21,6 +21,9 @@ class Settings(BaseSettings):
     sql_echo: bool = False          # SQL_ECHO=true logs every SQL statement the ORM runs
     log_level: str = "INFO"         # LOG_LEVEL
 
+    # --- Seed (M3): password for every seeded user; only scripts/seed.py reads it.
+    seed_password: str | None = None  # SEED_PASSWORD
+
     # --- Gemini (M1b). Optional so the API starts without them; only the eval
     # script and the worker call Gemini, and analyze() fails clearly if they are unset.
     gemini_api_key: str | None = None  # GEMINI_API_KEY

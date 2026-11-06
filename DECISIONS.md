@@ -111,3 +111,15 @@ Template:
 ## D-19: PostgreSQL 18, volume mounted at /var/lib/postgresql
 - Milestone: M2. Docker Compose runs `postgres:18` with the named volume at `/var/lib/postgresql`, not `/var/lib/postgresql/data` as in 17 and older. An init script creates `vendoriq_test` on first start.
 - The 18+ image keeps data in a per-major-version subdirectory (`PGDATA=/var/lib/postgresql/18/docker`), so a future `pg_upgrade --link` can have old and new data side by side under one mount; the old mount path would miss PGDATA and lose data when the container is recreated. Trade-off: init scripts only run on an empty volume, so a missing test database needs `docker compose down -v`, which deletes local data.
+
+## D-20: Composite foreign keys for same-org and same-parent consistency
+- Milestone: M3. Where a row could point at a row that belongs to a different org or a different parent, the FK includes the shared column: `assessments (vendor_id, org_id)` and `(created_by_user_id, org_id)`, `audit_events (actor_user_id, org_id)`, `processing_jobs (document_id, assessment_id)`, `review_decisions (ai_finding_id, assessment_control_id)`. Each target gets a `UNIQUE (id, <column>)`. Child tables (documents, jobs, findings, decisions, approvals) carry no `org_id`; they inherit the tenant through `assessment_id`, so there is no second copy that could disagree.
+- A plain FK on `vendor_id` accepts another org's vendor; the composite FK only matches a vendor with the same `org_id`, so a bug in application code cannot create a cross-tenant link. Gaps: `ai_findings` does not prove its job and control belong to the same assessment, and the reviewer, approver and uploader columns are not checked against the org in the database; application code and API tests cover those.
+
+## D-21: Triggers keep `updated_at` current and make `audit_events` append-only
+- Milestone: M3. One `set_updated_at()` BEFORE UPDATE trigger on every table with `updated_at` (a test checks none is missed). On `audit_events`, a row trigger rejects UPDATE and DELETE, and a statement trigger rejects TRUNCATE.
+- The state machine will update rows with plain SQL via `text()`, which an ORM `onupdate` never sees, so the database has to set the timestamp. TRUNCATE skips row triggers, so it needs its own. Limitation: the table owner can drop a trigger; the full fix is an application database role without UPDATE, DELETE or TRUNCATE on `audit_events`.
+
+## D-22: Enum columns as varchar + CHECK, values hard-coded in the migration
+- Milestone: M3. Role, statuses, labels and decisions are `varchar` columns with a named CHECK listing the allowed values, not native Postgres enum types. The migration writes the values out instead of importing the Python enums, and a test compares each CHECK definition with its enum.
+- Changing a CHECK is an ordinary drop-and-add in a migration, while native enums need `ALTER TYPE` and cannot easily drop values. A migration is a snapshot: if it imported the enums, editing an enum later would silently change what an old migration creates. Alembic autogenerate does not compare CHECK constraints, so the test is what catches an enum changed without a migration.
