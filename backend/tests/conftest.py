@@ -24,6 +24,8 @@ from sqlmodel import Session
 from app.config import get_settings
 from app.db import get_session
 from app.main import create_app
+from app.models import User
+from tests.factories import TEST_PASSWORD
 
 BACKEND_DIR = Path(__file__).resolve().parents[1]
 
@@ -98,6 +100,13 @@ def client_for(app: FastAPI, session: Session, **kwargs) -> TestClient:
     """A TestClient (HTTPX-based) whose requests all use the test session."""
     app.dependency_overrides[get_session] = lambda: session
     return TestClient(app, **kwargs)
+
+
+def login(client: TestClient, user: User, password: str = TEST_PASSWORD) -> None:
+    """Log in through the real endpoint; the client's cookie jar keeps the session cookie.
+    Logging in as another user replaces the cookie, so one client can switch users."""
+    response = client.post("/api/v1/auth/login", json={"email": user.email, "password": password})
+    assert response.status_code == 200, response.text
 
 
 @pytest.fixture

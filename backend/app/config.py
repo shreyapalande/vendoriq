@@ -21,6 +21,10 @@ class Settings(BaseSettings):
     sql_echo: bool = False          # SQL_ECHO=true logs every SQL statement the ORM runs
     log_level: str = "INFO"         # LOG_LEVEL
 
+    # --- Sessions (M4). True in any deployment served over HTTPS; False only for
+    # local http://, where browsers would refuse to send a Secure cookie back.
+    session_cookie_secure: bool = False  # SESSION_COOKIE_SECURE
+
     # --- Seed (M3): password for every seeded user; only scripts/seed.py reads it.
     seed_password: str | None = None  # SEED_PASSWORD
 
