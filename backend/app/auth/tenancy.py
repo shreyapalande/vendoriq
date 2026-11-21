@@ -31,8 +31,20 @@ def not_found() -> ApiError:
     return ApiError(404, "not_found", "Not found")
 
 
-def get_org_row_or_404[M: SQLModel](db: Session, model: type[M], row_id: uuid.UUID, user: User) -> M:
-    row = db.exec(select(model).where(model.id == row_id, model.org_id == user.org_id)).first()
+def get_org_row_or_404[M: SQLModel](
+    db: Session, model: type[M], row_id: uuid.UUID, user: User, for_update: bool = False,
+) -> M:
+    """for_update=True adds FOR UPDATE: the row stays locked until the transaction
+    ends, so a check like "status is DRAFT" cannot be invalidated by a concurrent
+    transition before this transaction commits.
+
+    populate_existing: if this Session already holds the object, overwrite its
+    attributes with the row just read under the lock. Without it SQLAlchemy keeps
+    the values it loaded earlier, and the check would run on stale data."""
+    query = select(model).where(model.id == row_id, model.org_id == user.org_id)
+    if for_update:
+        query = query.with_for_update().execution_options(populate_existing=True)
+    row = db.exec(query).first()
     if row is None:
         raise not_found()
     return row

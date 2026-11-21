@@ -30,10 +30,13 @@ class Assessment(SQLModel, table=True):
             ["created_by_user_id", "org_id"], ["users.id", "users.org_id"],
             name="fk_assessments_creator_same_org", ondelete="RESTRICT",
         ),
-        # Dashboard: an org's assessments, filtered by status, newest first.
-        # Postgres scans a B-tree backwards for ORDER BY created_at DESC, so the
-        # column does not need to be declared DESC.
-        Index("ix_assessments_org_id_status_created_at", "org_id", "status", "created_at"),
+        # The list endpoint, keyset-paginated on (created_at, id), newest first
+        # (migration 0003). One index per query shape: with and without a status
+        # filter. id is in both so the tie-break order comes from the index, with no
+        # sort. Postgres scans a B-tree backwards for ORDER BY ... DESC, so the
+        # columns do not need to be declared DESC.
+        Index("ix_assessments_org_id_status_created_at_id", "org_id", "status", "created_at", "id"),
+        Index("ix_assessments_org_id_created_at_id", "org_id", "created_at", "id"),
         # Vendor page: a vendor's assessments. Also used by the RESTRICT check
         # when a vendor delete is attempted.
         Index("ix_assessments_vendor_id", "vendor_id"),

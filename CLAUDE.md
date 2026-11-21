@@ -114,5 +114,7 @@ has no `&&`; use `;` or separate lines.)
     use `npx vite --port 5174` instead.
 - Gemini smoke check: `.venv\Scripts\python scripts\check_gemini.py`
 - Eval: `.venv\Scripts\python scripts\run_eval.py`
+- EXPLAIN keyset queries: `.venv\Scripts\python scripts\explain_keyset.py` (dev database;
+  scratch rows are rolled back; results in docs/query-plans.md)
 - Seed: `.venv\Scripts\python scripts\seed.py` (later milestone; not yet)
 - Worker: `cd backend; ..\.venv\Scripts\python -m worker.main` (later milestone; not yet)

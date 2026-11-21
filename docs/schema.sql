@@ -265,5 +265,15 @@ CREATE TRIGGER trg_audit_events_no_truncate BEFORE TRUNCATE ON audit_events FOR 
 
 UPDATE alembic_version SET version_num='0002' WHERE alembic_version.version_num = '0001';
 
+-- Running upgrade 0002 -> 0003
+
+CREATE INDEX ix_assessments_org_id_created_at_id ON assessments (org_id, created_at, id);
+
+DROP INDEX ix_assessments_org_id_status_created_at;
+
+CREATE INDEX ix_assessments_org_id_status_created_at_id ON assessments (org_id, status, created_at, id);
+
+UPDATE alembic_version SET version_num='0003' WHERE alembic_version.version_num = '0002';
+
 COMMIT;
 

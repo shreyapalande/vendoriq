@@ -22,7 +22,7 @@ from app.models import (
     User,
     Vendor,
 )
-from app.models.enums import Role
+from app.models.enums import AssessmentStatus, Role
 
 # Password of every user made with make_user(..., password=TEST_PASSWORD).
 TEST_PASSWORD = "correct horse battery staple"
@@ -59,15 +59,31 @@ def make_vendor(session: Session, org: Organization, name: str | None = None) ->
     return add(session, Vendor(org_id=org.id, name=name or f"Vendor {uuid.uuid4().hex[:8]}"))
 
 
-def make_assessment(session: Session, org: Organization) -> Assessment:
-    """An assessment with its own vendor and creator, all in `org`."""
-    vendor = make_vendor(session, org)
-    creator = make_user(session, org)
-    return add(session, Assessment(org_id=org.id, vendor_id=vendor.id, created_by_user_id=creator.id, title="Review"))
+def make_assessment(
+    session: Session,
+    org: Organization,
+    vendor: Vendor | None = None,
+    creator: User | None = None,
+    status: AssessmentStatus = AssessmentStatus.DRAFT,
+    title: str = "Review",
+) -> Assessment:
+    """An assessment in `org`; makes its own vendor and creator unless given."""
+    vendor = vendor or make_vendor(session, org)
+    creator = creator or make_user(session, org)
+    return add(session, Assessment(
+        org_id=org.id, vendor_id=vendor.id, created_by_user_id=creator.id, title=title, status=status,
+    ))
 
 
-def make_assessment_control(session: Session, assessment: Assessment) -> AssessmentControl:
-    control = add(session, SecurityControl(code=f"TEST_{uuid.uuid4().hex[:8]}", title="T", description="D"))
+def make_control(session: Session, code: str | None = None) -> SecurityControl:
+    """A security control. Codes are random so tests never clash with seeded controls."""
+    return add(session, SecurityControl(code=code or f"TEST_{uuid.uuid4().hex[:8]}", title="T", description="D"))
+
+
+def make_assessment_control(
+    session: Session, assessment: Assessment, control: SecurityControl | None = None,
+) -> AssessmentControl:
+    control = control or make_control(session)
     return add(session, AssessmentControl(assessment_id=assessment.id, control_id=control.id))
 
 

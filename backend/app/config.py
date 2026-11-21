@@ -6,6 +6,7 @@ Real environment variables take precedence over .env. See .env.example for every
 from functools import lru_cache
 from pathlib import Path
 
+from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
@@ -24,6 +25,13 @@ class Settings(BaseSettings):
     # --- Sessions (M4). True in any deployment served over HTTPS; False only for
     # local http://, where browsers would refuse to send a Secure cookie back.
     session_cookie_secure: bool = False  # SESSION_COOKIE_SECURE
+
+    # --- Password hashing (argon2id). The defaults are argon2-cffi's own: the RFC 9106
+    # "low memory" profile. Keep them in every real environment; only the tests lower
+    # them (tests/conftest.py), and tests/test_passwords.py pins these defaults.
+    argon2_time_cost: int = Field(default=3, ge=1)        # ARGON2_TIME_COST: passes over memory
+    argon2_memory_cost: int = Field(default=65536, ge=8)  # ARGON2_MEMORY_COST: KiB (64 MiB)
+    argon2_parallelism: int = Field(default=4, ge=1)      # ARGON2_PARALLELISM: lanes/threads
 
     # --- Seed (M3): password for every seeded user; only scripts/seed.py reads it.
     seed_password: str | None = None  # SEED_PASSWORD

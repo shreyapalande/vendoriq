@@ -8,6 +8,17 @@ never connects, so the M1 tests run without Docker. Mark database tests with
 `@pytest.mark.db`; `pytest -m "not db"` then runs everything else with Docker stopped.
 """
 
+import os
+
+# Cheap argon2 parameters, for the test suite only (the production defaults are in
+# app/config.py). Set here, at the very top of conftest.py, because pytest loads this
+# file before any test module, and app/auth/passwords.py reads the settings once, on
+# import, to build its hasher. Real environment variables take precedence over .env.
+# 1 pass, 8 KiB, 1 lane is the minimum argon2 accepts (memory >= 8 KiB per lane).
+os.environ["ARGON2_TIME_COST"] = "1"
+os.environ["ARGON2_MEMORY_COST"] = "8"
+os.environ["ARGON2_PARALLELISM"] = "1"
+
 from collections.abc import Iterator
 from pathlib import Path
 
@@ -19,12 +30,12 @@ from fastapi.testclient import TestClient
 from sqlalchemy import Engine, create_engine, text
 from sqlalchemy.engine import make_url
 from sqlalchemy.exc import OperationalError
-from sqlmodel import Session
+from sqlmodel import Session, col, select
 
 from app.config import get_settings
 from app.db import get_session
 from app.main import create_app
-from app.models import User
+from app.models import AuditEvent, User
 from tests.factories import TEST_PASSWORD
 
 BACKEND_DIR = Path(__file__).resolve().parents[1]
@@ -107,6 +118,14 @@ def login(client: TestClient, user: User, password: str = TEST_PASSWORD) -> None
     Logging in as another user replaces the cookie, so one client can switch users."""
     response = client.post("/api/v1/auth/login", json={"email": user.email, "password": password})
     assert response.status_code == 200, response.text
+
+
+def audit_events_for(session: Session, resource_id) -> list[AuditEvent]:
+    """The audit rows about one resource, oldest first (same order as the API)."""
+    return list(session.exec(
+        select(AuditEvent).where(AuditEvent.resource_id == resource_id)
+        .order_by(col(AuditEvent.created_at), col(AuditEvent.id))
+    ).all())
 
 
 @pytest.fixture

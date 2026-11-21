@@ -15,7 +15,7 @@ class Role(StrEnum):
 
 class AssessmentStatus(StrEnum):
     # Only the set of values is fixed here; which transitions are allowed is the
-    # state machine's job (app/domain/state_machine.py, later milestone).
+    # state machine's job (app/domain/state_machine.py).
     DRAFT = "DRAFT"
     PROCESSING = "PROCESSING"
     PROCESSING_FAILED = "PROCESSING_FAILED"

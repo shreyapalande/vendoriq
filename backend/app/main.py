@@ -4,7 +4,7 @@ import logging
 
 from fastapi import FastAPI
 
-from app.api import auth, health, vendors
+from app.api import assessments, auth, health, security_controls, vendors
 from app.config import get_settings
 from app.errors import install_error_handling
 
@@ -19,6 +19,8 @@ def create_app() -> FastAPI:
     app.include_router(health.router, prefix="/api/v1", tags=["health"])
     app.include_router(auth.router, prefix="/api/v1", tags=["auth"])
     app.include_router(vendors.router, prefix="/api/v1", tags=["vendors"])
+    app.include_router(assessments.router, prefix="/api/v1", tags=["assessments"])
+    app.include_router(security_controls.router, prefix="/api/v1", tags=["security-controls"])
     return app
 
 
